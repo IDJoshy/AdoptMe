@@ -1,0 +1,395 @@
+openapi: 3.0.0
+info:
+  title: Pets API
+  description: API for managing pet profiles.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Pets
+    description: Operations related to pet profiles
+
+paths:
+  /api/pets:
+    get:
+      summary: Get all pets
+      description: Retrieves a list of all pets from the database.
+      tags:
+        - Pets
+      responses:
+        '200':
+          description: Pets retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pet'
+        '404':
+          description: Not Found - PETS_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PETS_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+    post:
+      summary: Create a new pet (without image)
+      description: Creates a new pet profile with the given information.
+      tags:
+        - Pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetInput'
+      responses:
+        '200':
+          description: Pet created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Pet created
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/pets/{pid}:
+    get:
+      summary: Get pet by ID
+      description: Retrieves a single pet profile by its unique ID.
+      tags:
+        - Pets
+      parameters:
+        - in: path
+          name: pid
+          schema:
+            type: string
+            example: INSERT-PET-ID
+          required: true
+          description: ID of the pet to retrieve.
+      responses:
+        '200':
+          description: Pet retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - PET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PET_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+    put:
+      summary: Update a pet
+      description: Updates an existing pet profile by its ID.
+      tags:
+        - Pets
+      parameters:
+        - in: path
+          name: pid
+          schema:
+            type: string
+            example: INSERT-PET-ID
+          required: true
+          description: ID of the pet to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetUpdateInput'
+      responses:
+        '200':
+          description: Pet updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Pet updated
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - PET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PET_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+    delete:
+      summary: Delete a pet
+      description: Deletes a pet profile by its ID.
+      tags:
+        - Pets
+      parameters:
+        - in: path
+          name: pid
+          schema:
+            type: string
+            example: INSERT-PET-ID
+          required: true
+          description: ID of the pet to delete.
+      responses:
+        '200':
+          description: Pet deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Pet deleted
+                  payload:
+                    type: object
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - PET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PET_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/pets/withimage:
+    post:
+      summary: Create a new pet with an image
+      description: Creates a new pet profile and uploads an associated image.
+      tags:
+        - Pets
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Max
+                specie:
+                  type: string
+                  example: Dog
+                birthDate:
+                  type: string
+                  format: date
+                  example: 2021-01-15
+                petImage:
+                  type: string
+                  format: binary
+              required:
+                - name
+                - specie
+                - birthDate
+                - petImage
+      responses:
+        '200':
+          description: Pet and image created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Pet created
+                  payload:
+                    $ref: '#/components/schemas/Pet'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60c72b2f9c9f6d0015f8e3b2"
+        name:
+          type: string
+          example: Buddy
+        specie:
+          type: string
+          example: Dog
+        birthDate:
+          type: string
+          format: date
+          example: 2020-05-15
+        adopted:
+          type: boolean
+          example: false
+        owner:
+          type: string
+          nullable: true
+          example: null
+        image:
+          type: string
+          example: "/public/img/buddy.jpg"
+
+    PetInput:
+      type: object
+      required: [name, specie, birthDate]
+      properties:
+        name:
+          type: string
+          example: Luna
+        specie:
+          type: string
+          example: Cat
+        birthDate:
+          type: string
+          format: date
+          example: 2022-07-01
+
+    PetUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        specie:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        adopted:
+          type: boolean
+        owner:
+          type: string
+        image:
+          type: string
+
+    MISSING_REQUIRED_FIELDS:
+      type: object
+      properties:
+        error:
+          type: string
+          example: MISSING_REQUIRED_FIELDS
+        message:
+          type: string
+          example: One or more required fields are missing.
+
+    PETS_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: PETS_NOT_FOUND
+        message:
+          type: string
+          example: Pets not found in database, may be empty
+
+    PET_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: PET_NOT_FOUND
+        message:
+          type: string
+          example: Pet not found.
+
+    UNEXPECTED_ERROR:
+      type: object
+      properties:
+        error:
+          type: string
+          example: UNEXPECTED_ERROR
+        message:
+          type: string
+          example: An unknown error has occurred.
+

@@ -1,0 +1,425 @@
+openapi: 3.0.0
+info:
+  title: Sessions API
+  description: API for user authentication and session management.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+
+securitySchemes:
+  cookieAuth:
+    type: apiKey
+    in: cookie
+    name: EphemeralCookie
+
+tags:
+  - name: Authentication
+    description: User registration, login, and session management
+
+paths:
+  /api/sessions/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user account.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: User registered successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: string
+                    example: USER_ID
+        '400':
+          description: Bad Request   - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '409':
+          description: Conflict - USER_ALREADY_EXISTS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_ALREADY_EXISTS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/sessions/login:
+    post:
+      summary: Login user
+      description: Authenticates user and sets an ephemeral session cookie.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: EphemeralCookie=token; Path=/; HttpOnly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Logged in
+        '400':
+          description: Bad Request - USER_WRONG_CREDENTIALS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_WRONG_CREDENTIALS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/sessions/current:
+    get:
+      summary: Get current user session
+      description: Returns current user info from the session token.
+      tags: [Authentication]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current user retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/UserTokenPayload'
+        '401':
+          description: Unauthorized - UNAUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNAUTHORIZED'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/sessions/unprotectedLogin:
+    post:
+      summary: Login with unprotected cookie
+      description: Authenticates user and sets a non-httpOnly cookie.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login with unprotected cookie successful.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: unprotectedCookie=token; Path=/
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Unprotected Logged in
+        '400':
+          description: Bad Request - USER_WRONG_CREDENTIALS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_WRONG_CREDENTIALS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+
+  /api/sessions/unprotectedCurrent:
+    get:
+      summary: Get unprotected session user
+      description: Returns user from non-httpOnly cookie.
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Current user retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/UserTokenPayload'
+        '401':
+          description: Unauthorized - UNAUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNAUTHORIZED'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/sessions/logout:
+    get:
+      summary: Logout user
+      description: Clears session cookie and updates last connection.
+      tags: [Authentication]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User logged out.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: EphemeralCookie=; Max-Age=0; Path=/
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Logged out
+        '401':
+          description: Unauthorized - UNAUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNAUTHORIZED'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+components:
+  schemas:
+    # Auth Input
+    UserRegister:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - password
+      properties:
+        first_name:
+          type: string
+          example: Josh
+        last_name:
+          type: string
+          example: Aur
+        email:
+          type: string
+          format: email
+          example: joshy@example.com
+        password:
+          type: string
+          format: password
+          example: coder123
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: joshy@example.com
+        password:
+          type: string
+          format: password
+          example: coder123
+
+    UserTokenPayload:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Josh Aur
+        role:
+          type: string
+          example: user
+        email:
+          type: string
+          example: joshy@example.com
+        documents:
+          type: array
+          items: [
+            type: string
+          ]
+        last_connection:
+          type: string
+          example: 2022-01-01T00:00:00.000Z
+            
+
+    UNAUTHORIZED:
+      type: object
+      properties:
+        error:
+          type: string
+          example: UNAUTHORIZED
+        message:
+          type: string
+          example: You are not authorized to perform this action.
+
+    MISSING_REQUIRED_FIELDS:
+      type: object
+      properties:
+        error:
+          type: string
+          example: MISSING_REQUIRED_FIELDS
+        message:
+          type: string
+          example: One or more required fields are missing.
+
+    USER_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USER_NOT_FOUND
+        message:
+          type: string
+          example: User not found.
+
+    USERS_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USERS_NOT_FOUND
+        message:
+          type: string
+          example: Users not found in database, may be empty.
+
+    NO_FILES_UPLOADED:
+      type: object
+      properties:
+        error:
+          type: string
+          example: NO_FILES_UPLOADED
+        message:
+          type: string
+          example: No files were uploaded.
+
+    UNEXPECTED_ERROR:
+      type: object
+      properties:
+        error:
+          type: string
+          example: UNEXPECTED_ERROR
+        message:
+          type: string
+          example: An unknown error has occurred.
+
+    USER_ALREADY_EXISTS:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USER_ALREADY_EXISTS
+        message:
+          type: string
+          example: A user with this email is already registered.
+
+    USER_WRONG_CREDENTIALS:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USER_WRONG_CREDENTIALS
+        message:
+          type: string
+          example: Email or password is incorrect.
+
+    USER_NOT_AUTHENTICATED:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USER_NOT_AUTHENTICATED
+        message:
+          type: string
+          example: You must be authenticated to perform this action.
+
+    INVALID_TOKEN:
+      type: object
+      properties:
+        error:
+          type: string
+          example: INVALID_TOKEN
+        message:
+          type: string
+          example: Provided token is invalid or expired.
+
+    JWT_ERROR:
+      type: object
+      properties:
+        error:
+          type: string
+          example: JWT_ERROR
+        message:
+          type: string
+          example: Error while processing token.

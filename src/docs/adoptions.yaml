@@ -1,0 +1,227 @@
+openapi: 3.0.0
+info:
+  title: Adoptions API
+  description: API for managing pet adoptions.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000 # 3000 for prod, 8080 for dev 
+
+tags:
+  - name: Adoptions
+    description: Pet adoption endpoints.
+
+paths:
+  /api/adoptions/:
+    get:
+      summary: Get all adoptions
+      description: Retrieves a list of all successful pet adoptions.
+      tags:
+        - Adoptions
+      responses:
+        '200':
+          description: Success - A list of all adoptions available.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Adoption'
+        '404':
+          description: Not Found - ADOPTIONS_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ADOPTIONS_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/adoptions/{aid}:
+    get:
+      summary: Get adoption by aid (adoption ID)
+      description: Retrieves a single adoption by its unique ID.
+      tags:
+        - Adoptions
+      parameters:
+        - in: path
+          name: aid
+          schema:
+            type: string
+            example: INSERT-ADOPTION-ID
+          required: true
+          description: Unique ID of the adoption on database.
+      responses:
+        '200':
+          description: Success - Adoption record found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/Adoption'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - ADOPTIONS_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ADOPTIONS_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/adoptions/{uid}/{pid}:
+    post:
+      summary: Create a new adoption
+      description: Records a new adoption by linking a user to a pet. Updates user's adopted pets and pet's adopted status.
+      tags:
+        - Adoptions
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+            example: INSERT-USER-ID
+          required: true
+          description: Unique ID of the user (adopter).
+        - in: path
+          name: pid
+          schema:
+            type: string
+            example: INSERT-PET-ID
+          required: true
+          description: Unique ID of the pet to be adopted.
+      responses:
+        '200':
+          description: Success - Pet adopted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Pet adopted successfully
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - USER_NOT_FOUND / PET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_NOT_FOUND_PET_NOT_FOUND'
+        '409':
+          description: Conflict - ADOPTION_ALREADY_EXISTS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ADOPTION_ALREADY_EXISTS'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+components:
+  schemas:
+    Adoption:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the adoption on database.
+          example: aid
+        owner:
+          type: string
+          description: Unique identifier of the user adopter on database.
+          example: uid
+        pet:
+          type: string
+          description: Unique identifier of the adopted pet on database.
+          example: pid
+        "__v":
+          type: integer
+          description: 
+          example: 0
+      required:
+        - owner
+        - pet
+
+    ADOPTIONS_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: ADOPTIONS_NOT_FOUND
+        message:
+          type: string
+          example: Adoptions not found in database, may be empty
+
+    MISSING_REQUIRED_FIELDS:
+          type: object
+          properties:
+            error:
+              type: string
+              example: MISSING_REQUIRED_FIELDS
+            message:
+              type: string
+              example: Please provide all required fields, missing required fields.
+
+    UNEXPECTED_ERROR:
+          type: object
+          properties:
+            error:
+              type: string
+              example: UNEXPECTED_ERROR
+            message:
+              type: string
+              example: An unknown error has occurred
+
+    USER_NOT_FOUND_PET_NOT_FOUND:
+          type: object
+          properties:
+            error:
+              type: string
+              example: USER_NOT_FOUND / PET_NOT_FOUND
+            message:
+              type: string
+              example: User not found in database, be sure of the user's ID / Pet not found in database, be sure of the pet's ID
+
+    ADOPTION_ALREADY_EXISTS:
+          type: object
+          properties:
+            error:
+              type: string
+              example: ADOPTION_ALREADY_EXISTS
+            message:
+              type: string
+              example: Adoption already exists in database, cannot create a new adoption with the same owner and pet

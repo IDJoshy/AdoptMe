@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: Users API
+  description: API for managing user profiles and documents.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Users
+    description: Operations related to user profiles
+
+paths:
+  /api/users:
+    get:
+      summary: Get all users
+      description: Retrieves a list of all user profiles from the database.
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '404':
+          description: Not Found - USERS_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USERS_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/users/{uid}:
+    get:
+      summary: Get user by ID
+      description: Retrieves a single user profile by its unique ID.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+            example: INSERT-USER-ID
+          required: true
+          description: Unique ID of the user to retrieve.
+      responses:
+        '200':
+          description: User retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - USER_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+    put:
+      summary: Update a user
+      description: Updates an existing user's information by ID.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+            example: INSERT-USER-ID
+          required: true
+          description: Unique ID of the user to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: User updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: User updated
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - USER_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+    delete:
+      summary: Delete a user
+      description: Deletes a user profile by its unique ID.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+            example: INSERT-USER-ID
+          required: true
+          description: Unique ID of the user to delete.
+      responses:
+        '200':
+          description: User deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: User deleted
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MISSING_REQUIRED_FIELDS'
+        '404':
+          description: Not Found - USER_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/users/{uid}/documents:
+    post:
+      summary: Upload user documents
+      description: Uploads one or more documents for a specific user.
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: uid
+          schema:
+            type: string
+            example: INSERT-USER-ID
+          required: true
+          description: Unique ID of the user to upload documents to.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                documents:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - documents
+      responses:
+        '200':
+          description: Documents uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Documents uploaded successfully
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentReference'
+        '400':
+          description: Bad Request - MISSING_REQUIRED_FIELDS or NO_FILES_UPLOADED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NO_FILES_UPLOADED'
+        '404':
+          description: Not Found - USER_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/USER_NOT_FOUND'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        pets:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentReference'
+        last_connection:
+          type: string
+          format: date-time
+
+    DocumentReference:
+      type: object
+      properties:
+        name:
+          type: string
+        reference:
+          type: string
+
+    UserUpdateInput:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        pets:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentReference'
+
+    MISSING_REQUIRED_FIELDS:
+      type: object
+      properties:
+        error:
+          type: string
+          example: MISSING_REQUIRED_FIELDS
+        message:
+          type: string
+          example: One or more required fields are missing.
+
+    USER_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USER_NOT_FOUND
+        message:
+          type: string
+          example: User not found.
+
+    USERS_NOT_FOUND:
+      type: object
+      properties:
+        error:
+          type: string
+          example: USERS_NOT_FOUND
+        message:
+          type: string
+          example: Users not found in database, may be empty.
+
+    NO_FILES_UPLOADED:
+      type: object
+      properties:
+        error:
+          type: string
+          example: NO_FILES_UPLOADED
+        message:
+          type: string
+          example: No files were uploaded.
+
+    UNEXPECTED_ERROR:
+      type: object
+      properties:
+        error:
+          type: string
+          example: UNEXPECTED_ERROR
+        message:
+          type: string
+          example: An unknown error has occurred.

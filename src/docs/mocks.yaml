@@ -1,0 +1,250 @@
+openapi: 3.0.0
+info:
+  title: Mocks API
+  description: API for generating mock user and pet data.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000 # 3000 for prod, 8080 for dev 
+
+tags:
+  - name: Mock Data Generation
+    description: Endpoints for generating fake data for testing purposes
+
+paths:
+  /api/mocks/mockingusers: 
+    get:
+      summary: Generate mock users
+      description: Generates and inserts a specified quantity (50 as default) of mock user data into the database.
+      tags:
+        - Mock Data Generation
+      parameters:
+        - in: query
+          name: quantity
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+          description: The number of mock users to generate.
+      responses:
+        '200':
+          description: Success - User Mock data generated and inserted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockUser'
+        '400':
+          description: Bad Request - BAD_REQUEST
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BAD_REQUEST_QUANTITY'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/mocks/mockingpets: 
+    get:
+      summary: Generate mock pets
+      description: Generates and inserts a specified quantity of mock pet data into the database.
+      tags:
+        - Mock Data Generation
+      parameters:
+        - in: query
+          name: quantity
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+          description: The number of mock pets to generate.
+      responses:
+        '200':
+          description: Success - Pet Mock data generated and inserted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockPet'
+        '400':
+          description: Bad Request - BAD_REQUEST
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BAD_REQUEST_QUANTITY'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+  /api/mocks/generateData:
+    post:
+      summary: Generate combined mock data
+      description: Generates and inserts mock users and pets into the database.
+      tags:
+        - Mock Data Generation
+      parameters:
+        - in: query
+          name: users
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          description: The number of mock users to generate.
+        - in: query
+          name: pets
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          description: The number of mock pets to generate.
+      responses:
+        '200':
+          description: Success - Mock data generated and inserted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Mock data generated and inserted successfully.
+                  usersCreated:
+                    type: integer
+                    example: 10
+                  users:
+                    $ref: '#/components/schemas/MockUser'
+                  petsCreated:
+                    type: integer
+                    example: 10
+                  pets:
+                    $ref: '#/components/schemas/MockPet'
+        '400':
+          description: Bad Request - BAD_REQUEST
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BAD_REQUEST_QUANTITYes'
+        '500':
+          description: Internal Server Error - UNEXPECTED_ERROR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UNEXPECTED_ERROR'
+
+components:
+  schemas:
+    MockUser: 
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60c72b2f9c9f6d0015f8e3b1"
+        first_name:
+          type: string
+          example: "Mocky"
+        last_name:
+          type: string
+          example: "User"
+        email:
+          type: string
+          format: email
+          example: "mocky.user@example.com"
+        password:
+          type: string
+          description: Hashed password (not returned in actual responses for security)
+          example: "$2a$10$hashedpassword"
+        role:
+          type: string
+          example: "user"
+        pets:
+          type: array
+          items:
+            type: string 
+          example: []
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              reference: { type: string }
+          example: []
+        last_connection:
+          type: string
+          format: date-time
+          example: "2024-06-25T10:00:00.000Z"
+    MockPet:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60c72b2f9c9f6d0015f8e3b2"
+        name:
+          type: string
+          example: "Buddy"
+        specie:
+          type: string
+          example: "Dog"
+        birthDate:
+          type: string
+          format: date # Assuming generatePet uses a date string or Date object
+          example: "2020-05-15"
+        adopted:
+          type: boolean
+          example: false
+        owner:
+          type: string
+          nullable: true
+          example: null
+        image:
+          type: string
+          example: "/public/img/buddy.jpg"
+    BAD_REQUEST_QUANTITY:
+        type: object
+        properties:
+          error:
+            type: string
+            example: BAD_REQUEST
+          message:
+            type: string
+            example: Quantity must be a valid number.
+    UNEXPECTED_ERROR:
+          type: object
+          properties:
+            error:
+              type: string
+              example: UNEXPECTED_ERROR
+            message:
+              type: string
+              example: An unknown error has occurred
+    BAD_REQUEST_QUANTITYes:
+      type: object
+      properties:
+        error:
+          type: string
+          example: BAD_REQUEST
+        message:
+          type: string
+          example: Quantities for users and pets must be valid numbers.
