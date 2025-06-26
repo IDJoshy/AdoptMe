@@ -1,0 +1,1 @@
+docker_url: docker pull ephemeraljosh/adoptmeserver:1.0.0
