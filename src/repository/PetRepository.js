@@ -7,4 +7,7 @@ export default class PetRepository extends GenericRepository {
     getPetById = (id) =>{
         return this.getBy({_id:id})
     }
+    getBy(params) {
+        return this.dao.getBy(params);
+    }
 }

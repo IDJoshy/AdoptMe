@@ -49,6 +49,12 @@ const errors =
         message: 'Could not reach server',
         status: 503
     },
+    INVALID_MONGO_ID: 
+    {
+        code: 'INVALID_MONGO_ID',
+        message: 'Invalid user ID format',
+        status: 400
+    },
     //#endregion
 
     //#region users
@@ -78,7 +84,7 @@ const errors =
         status: 400
     },
 
-    //login
+    //USERS
     USERS_NOT_FOUND: 
     {
         code: 'USERS_NOT_FOUND',
@@ -126,6 +132,12 @@ const errors =
         code: 'USER_NOT_LONGER_EXISTS',
         message: 'User not longer exists in database',
         status: 401
+    },
+    USERS_NOT_CREATED:
+    {
+        code: 'USERS_NOT_CREATED',
+        message: 'Users not created',
+        status: 400
     },
 
     //session

@@ -53,6 +53,6 @@ export const createBaseLogger = (env) =>
 export const addLogger = (req, res, next) => 
 {
     req.logger = logger;
-    req.logger.http(`${req.method} in ${req.url} - ${new Date().toLocaleString()}`);
+    //req.logger.http(`${req.method} in ${req.url} - ${new Date().toLocaleString()}`);
     next();
 };

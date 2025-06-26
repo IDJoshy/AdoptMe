@@ -9,12 +9,23 @@ export default function catchAsync(fn) {
                 if (error instanceof AppError) 
                 {
                     LoggerControllerError({ req, error });
-                    //req.logger?.error(`[${error.code}] ${error.message}`);
-                    return res.status(error.status).json({
+                    const responseBody = 
+                    {
                         error: error.code,
                         message: error.message,
-                        ...(Object.keys(error.etc || {}).length > 0 && { details: error.etc })
-                    });
+                    };
+                
+                    if (Object.keys(error.etc || {}).length > 0) 
+                    {
+                        const filteredEtc = { ...error.etc };
+                        delete filteredEtc.message;
+
+                        if (Object.keys(filteredEtc).length > 0) {
+                            responseBody.details = filteredEtc;
+                        }
+                    }
+
+                    return res.status(error.status).json(responseBody);
                 }
 
                 req.logger?.fatal(`Unexpected error: ${error.message}`);

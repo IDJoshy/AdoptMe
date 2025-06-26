@@ -3,6 +3,7 @@ import { petsService } from "../services/index.js"
 import { __dirname } from "../config/config.js";
 import { AppError } from "../utils/AppError.js";
 import catchAsync from "../utils/catchAsync.js";
+import mongoose from "mongoose";
 
 const getAllPets = catchAsync(async (req, res, next) =>
 {
@@ -21,7 +22,20 @@ const getPet = catchAsync(async (req, res, next) =>
 {
     req.logger.http(`Request: ${req.method} ${req.originalUrl} from ${req.ip}`);
     const petId = req.params.pid;
-    if(!petId) throw new AppError("MISSING_REQUIRED_FIELDS");
+
+    if(!petId)
+    {
+        throw new AppError("MISSING_REQUIRED_FIELDS", 
+        {
+            message: "Missing required fields {uid}",
+        });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(petId)) 
+    {
+        throw new AppError("INVALID_MONGO_ID", { message: "Invalid pet ID format" });
+    }   
+    
     req.logger.debug(`Request: ${req.method} ${req.originalUrl} from ${req.ip} calls service - petID: ${petId}`);
     const pet = await petsService.getPetById(petId);
     if(!pet) throw new AppError("PET_NOT_FOUND");

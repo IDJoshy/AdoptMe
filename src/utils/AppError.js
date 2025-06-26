@@ -4,19 +4,28 @@ export class AppError extends Error
 {
     constructor(code, etc = {}) 
     {
-        const errorDictionary = errors[code] || 
-        {
-            code: 'UNKNOWN_ERROR',
-            message: 'An unknown error has occurred',
-            status: 500
-        };
+        const errorDictionaryEntry = errors[code];
 
-        super(errorDictionary.message);
-        this.code = errorDictionary.code || 'UNKNOWN_ERROR';
-        this.status = errorDictionary.status || 500;
+        if (!errorDictionaryEntry)
+        {
+            super('An unknown error has occurred.');
+            this.code = 'UNKNOWN_ERROR';
+            this.status = 500;
+        }
+        else
+        {
+            const finalMessage = etc.message || errorDictionaryEntry.message;
+            super(finalMessage); 
+            
+            this.code = errorDictionaryEntry.code;
+            this.status = errorDictionaryEntry.status;
+        }
+
         this.etc = etc;
+        Error.captureStackTrace(this, this.constructor);
     }
 }
+
 
 export const EndAppError = () => 
 {

@@ -1,7 +1,7 @@
 import { usersService } from "../services/index.js"
 import { AppError } from "../utils/AppError.js";
 import catchAsync from "../utils/catchAsync.js";
-
+import mongoose from 'mongoose';
 
 const getAllUsers = catchAsync(async (req, res, next) =>
 {
@@ -10,15 +10,23 @@ const getAllUsers = catchAsync(async (req, res, next) =>
     const users = await usersService.getAll();
     if(!users || users.length === 0) throw new AppError("USERS_NOT_FOUND");
     req.logger.info(`Request: ${req.method} ${req.originalUrl} from ${req.ip} called successfully - users: ${users.length}`);
-    res.status(200).json({status:"success",payload:users})
+    res.status(200).json({status:"success", payload: users})
 
 });
+
 const getUser = catchAsync(async (req, res, next) => 
 {
 
     req.logger.http(`Request: ${req.method} ${req.originalUrl} from ${req.ip}`);
     const userId = req.params.uid;
-    if(!userId) throw new AppError("MISSING_REQUIRED_FIELDS");
+    if(!userId)
+    {
+        throw new AppError("MISSING_REQUIRED_FIELDS", 
+        {
+            message: "Missing required fields {uid}",
+        });
+    }
+
     req.logger.debug(`Request: ${req.method} ${req.originalUrl} from ${req.ip} calls service - userID: ${userId}`);
     const user = await usersService.getUserById(userId);
     if(!user) throw new AppError("USER_NOT_FOUND");
@@ -26,6 +34,7 @@ const getUser = catchAsync(async (req, res, next) =>
     res.send({status:"success",payload:user})
 
 });
+
 const updateUser = catchAsync(async (req, res, next) =>
 {
 
@@ -39,10 +48,10 @@ const updateUser = catchAsync(async (req, res, next) =>
     if(!user) throw new AppError("USER_NOT_FOUND");
     const result = await usersService.update(userId,updateBody);
     req.logger.info(`Request: ${req.method} ${req.originalUrl} from ${req.ip} called successfully - userID: ${userId}`);
-    res.status(200).json({status:"success",message:"User updated"})
-
+    res.status(200).json({status:"success", message:"User updated", payload: result})
 
 });
+
 const deleteUser = catchAsync(async (req, res, next) =>
 {
 
@@ -54,13 +63,13 @@ const deleteUser = catchAsync(async (req, res, next) =>
     const userToDelete = await usersService.getUserById(userId);
     if(!userToDelete) throw new AppError("USER_NOT_FOUND");
 
-    await usersService.delete(userToDelete._id);
-    const result = await usersService.getUserById(userId);
+    const result = await usersService.delete(userToDelete._id);
     
     req.logger.info(`Request: ${req.method} ${req.originalUrl} from ${req.ip} called successfully - userID: ${userId}`);
-    res.status(200).json({status:"success", message:"User deleted"})
+    res.status(200).json({status:"success", message:"User deleted", payload: result})
 
 });
+
 const uploadUserDocuments = catchAsync(async (req, res, next) =>
 {
 
@@ -68,6 +77,10 @@ const uploadUserDocuments = catchAsync(async (req, res, next) =>
     const userId = req.params.uid;
     if (!userId) {
         throw new AppError("MISSING_REQUIRED_FIELDS");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new AppError("INVALID_MONGO_ID", { message: "Invalid user ID format" });
     }
 
     const files = req.files;

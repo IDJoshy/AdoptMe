@@ -11,11 +11,22 @@ const register = catchAsync(async (req, res, next) =>
 {
 
     req.logger.http(`Request: ${req.method} ${req.originalUrl} from ${req.ip}`);
+
     const { first_name, last_name, email, password } = req.body;
-    if (!first_name || !last_name || !email || !password) throw new AppError("MISSING_REQUIRED_FIELDS");
+    if (!first_name || !last_name || !email || !password)
+    {
+        throw new AppError("MISSING_REQUIRED_FIELDS", {
+            message: "Not all required fields were provided.",
+        });
+    }
 
     const exists = await usersService.getUserByEmail(email);
-    if (exists) throw new AppError("USER_ALREADY_EXISTS");
+    if (exists)
+    {
+        throw new AppError("USER_ALREADY_EXISTS", {
+			message: "User already exists in the database, cannot create a new user with the same email",
+		});
+    }
 
     const hashedPassword = await createHash(password);
     const user = {
@@ -38,10 +49,23 @@ const login = catchAsync(async (req, res, next) =>
     const { email, password } = req.body;
     if (!email || !password) throw new AppError("MISSING_REQUIRED_FIELDS");
     req.logger.debug(`Request: ${req.method} ${req.originalUrl} from ${req.ip} calls service - email: ${email}`);
+
     const user = await usersService.getUserByEmail(email);
-    if(!user) throw new AppError("USER_WRONG_CREDENTIALS");
+    if(!user) 
+    {
+        throw new AppError("USER_WRONG_CREDENTIALS", {
+			message: "Incorrect email or password.",
+		});
+    }
+
     const isValidPassword = await passwordValidation(user,password);
-    if(!isValidPassword) throw new AppError("USER_WRONG_CREDENTIALS");
+    if(!isValidPassword)
+    {
+        throw new AppError("USER_WRONG_CREDENTIALS", {
+			message: "Incorrect email or password.",
+		});
+    }
+
     const userDto = UserDTO.getUserTokenFrom(user);
     const token = jwt.sign(userDto, env.jwt_secret || 'EphemeralSecret',{expiresIn:"1h"});
     
@@ -60,16 +84,24 @@ const current = catchAsync(async (req, res, next) =>
 
     req.logger.http(`Request: ${req.method} ${req.originalUrl} from ${req.ip}`);
 
-    if (!cookie) throw new AppError("USER_NOT_AUTHENTICATED");
-
-    let user;
-    try {
-        user = jwt.verify(cookie, env.jwt_secret || 'EphemeralSecret');
-    } catch {
-        throw new AppError("USER_NOT_AUTHENTICATED");
+    if (!cookie) 
+    {
+        throw new AppError("USER_NOT_AUTHENTICATED", {
+            message: "Not logged in.",
+        });
     }
 
-    req.logger.debug(`Request: ${req.method} ${req.originalUrl} from ${req.ip} calls service - userID: ${user._id}`);
+    let user;
+    try 
+    {
+        user = jwt.verify(cookie, env.jwt_secret || 'EphemeralSecret');
+    } 
+    catch 
+    {
+        throw new AppError("USER_NOT_AUTHENTICATED", {
+            message: "Not logged in.",
+        });
+    }
 
     req.logger.info(`Request: ${req.method} ${req.originalUrl} from ${req.ip} called successfully - userID: ${user._id}`);
     return res.status(200).json({ status: "success", payload: user });
